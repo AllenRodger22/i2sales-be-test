@@ -1,7 +1,7 @@
 # auth/routes.py
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from extensions import db, bcrypt
 from models.user import User
 
@@ -38,6 +38,42 @@ def login():
             "role": user.role,
         }
     }), 200
+
+
+@bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or data.get("passwordHash") or ""
+    # Role opcional no payload, mas forçamos BROKER por segurança
+    role = "BROKER"
+
+    if not name or not email or not password:
+        return jsonify({"error": "Dados inválidos."}), 400
+    if "@" not in email:
+        return jsonify({"error": "Email inválido."}), 400
+    if len(password) < 8:
+        return jsonify({"error": "Senha deve ter no mínimo 8 caracteres."}), 400
+
+    try:
+        pw_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+        u = User(name=name, email=email, password_hash=pw_hash, role=role)
+        db.session.add(u)
+        db.session.commit()
+        return jsonify({
+            "id": str(u.id),
+            "name": u.name,
+            "email": u.email,
+            "role": u.role,
+            "createdAt": u.created_at.isoformat() if u.created_at else None,
+        }), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Email já registrado."}), 409
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Internal Server Error", "detail": str(e)}), 500
 
 
 @bp.route("/me", methods=["GET"])
