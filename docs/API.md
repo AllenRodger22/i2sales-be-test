@@ -2,7 +2,7 @@ i2Sales API – Guia de Integração (Frontend)
 
 Base URL
 - Local: `http://localhost:5000/api/v1`
-- Produção (Render): defina `BASE_URL = https://your-service.onrender.com/api/v1`
+- Produção (Render): defina `BASE_URL = https://i2sales-be-test.onrender.com/api/v1`
 
 Como usar nos serviços do frontend
 - Construa URLs como `${BASE_URL}/auth/login`, `${BASE_URL}/clients`, etc.

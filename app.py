@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(dotenv_path=ENV_PATH)
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 # Suporte a execução como script (python app.py) e como módulo (flask --app app)
 try:
@@ -26,6 +26,12 @@ def create_app():
     jwt.init_app(app)
     bcrypt.init_app(app)
     init_cors(app)
+
+    # Garantir resposta ao preflight (OPTIONS) globalmente
+    @app.before_request
+    def _handle_cors_preflight():
+        if request.method == "OPTIONS":
+            return "", 204
 
     # Blueprints
     from auth.routes import bp as auth_bp
@@ -70,4 +76,3 @@ if __name__ == "__main__":
             print("Seed admin skip:", e)
 
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
