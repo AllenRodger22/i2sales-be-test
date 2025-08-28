@@ -5,18 +5,17 @@ Base URL
 - Produção: `https://i2sales-be-test.onrender.com/api/v1`
 
 Headers Padrão
-- Protegidas: `Authorization: Bearer <JWT>`
+- Protegidas: `Authorization: Bearer <Supabase Access Token>`
 - CORS: preflight `OPTIONS` em `/api/v1/*` responde 204 e não exige JWT.
 
-Autenticação
-- POST `${BASE_URL}/auth/register`
-  - Body: `{ "name": "Teste", "email": "t@x.com", "password": "1234567890" }`
-  - Efeito: cria linha em `public.users` (role padrão `BROKER`).
-  - 201 → `{ id, name, email, role, createdAt }`
-- POST `${BASE_URL}/auth/login`
-  - Body: `{ "email": "admin@x.com", "password": "1234567890" }`
-  - 200 → `{ token, user: { id, name, email, role } }`
+Autenticação (Supabase)
+- Fluxo: o frontend autentica via Supabase e envia o `access_token` nas requisições ao backend.
+- Variável de ambiente obrigatória no backend: `SUPABASE_JWT_SECRET` (de Supabase → Settings → API → JWT Secret).
+- Endpoints legados descontinuados:
+  - `POST /auth/register` → 410 (não usar; cadastro é no Supabase)
+  - `POST /auth/login` → 410 (não usar; login é no Supabase)
 - GET `${BASE_URL}/auth/me`
+  - Protegido por Supabase JWT (audience `authenticated`)
   - 200 → `{ id, name, email, role }`
 
 Clientes

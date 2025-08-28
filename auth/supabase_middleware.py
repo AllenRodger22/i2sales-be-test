@@ -8,6 +8,7 @@ from flask import request, jsonify, g
 from extensions import db, bcrypt
 from models.user import User
 from .supabase_auth import verify_supabase_jwt, SupabaseAuthError
+import uuid
 
 
 def _extract_bearer_token() -> Optional[str]:
@@ -30,13 +31,35 @@ def _claims_email(claims: Dict[str, Any]) -> str:
     return str(email).strip().lower()
 
 
-def _ensure_local_user(email: str, name_hint: Optional[str], default_role: str = "BROKER") -> User:
+def _ensure_local_user(email: str, name_hint: Optional[str], supabase_sub: str, default_role: str = "BROKER") -> User:
+    """Upsert user ensuring the local id matches the Supabase sub when creating.
+
+    - If a user with primary key == supabase_sub exists, return it.
+    - Else, if a user with the same email exists, return it (keeps legacy data).
+    - Else, create a new user with id = supabase_sub and role = default_role.
+    """
+    # Normalize UUID for primary key lookup
+    sup_uuid = uuid.UUID(str(supabase_sub))
+
+    # Prefer lookup by PK (expected for new users)
+    user = db.session.get(User, sup_uuid)
+    if user:
+        return user
+
+    # Fallback to legacy by-email lookup
     user = db.session.query(User).filter(User.email == email).one_or_none()
     if user:
         return user
+
     # Auto-provision with a dummy password as Supabase manages credentials
     dummy_pw_hash = bcrypt.generate_password_hash("supabase-external").decode("utf-8")
-    user = User(name=name_hint or email.split("@")[0], email=email, password_hash=dummy_pw_hash, role=default_role)
+    user = User(
+        id=sup_uuid,
+        name=name_hint or email.split("@")[0],
+        email=email,
+        password_hash=dummy_pw_hash,
+        role=default_role,
+    )
     db.session.add(user)
     db.session.commit()
     return user
@@ -75,7 +98,7 @@ def supabase_required() -> Callable:
             )
 
             try:
-                user = _ensure_local_user(email, name_hint)
+                user = _ensure_local_user(email, name_hint, sup_claims.get("sub"))
             except Exception as e:
                 db.session.rollback()
                 return jsonify({"error": "Internal Server Error", "detail": str(e)}), 500
@@ -106,4 +129,3 @@ def current_sub() -> Optional[str]:
 
 def current_role() -> Optional[str]:
     return current_claims().get("role")
-

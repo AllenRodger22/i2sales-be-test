@@ -74,6 +74,7 @@ class Config:
     # Permitir apenas origens conhecidas por padrão; pode sobrescrever via CORS_ORIGINS
     _cors_from_env = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
     CORS_ORIGINS = _cors_from_env or [
+        "http://localhost:7132",
         "http://localhost:5173",
         "https://SEU-PROJETO.vercel.app",
     ]

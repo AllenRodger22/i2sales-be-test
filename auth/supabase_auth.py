@@ -23,10 +23,12 @@ def verify_supabase_jwt(token: str) -> Dict[str, Any]:
         raise SupabaseAuthError("SUPABASE_JWT_SECRET is not configured")
 
     try:
+        # Enforce Supabase audience to be "authenticated" as per frontend setup
         claims = pyjwt.decode(
             token,
             secret,
             algorithms=["HS256"],
+            audience="authenticated",
             options={"require": ["sub", "exp"]},
         )
         return claims
