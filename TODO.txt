@@ -1,0 +1,42 @@
+# Documento de Tarefas - Agente Codex
+
+Este documento serve como um guia estruturado para organizar tarefas de programação.
+Você atuará como Agente Codex, com foco em simplificar e executar soluções.
+Cada tarefa é descrita no formato: SITUAÇÃO – PROBLEMA – OBJETIVO – STATUS.
+
+---
+
+SITUAÇÃO: Blueprints com prefixos duplicados e endpoints de clientes incompletos.
+PROBLEMA: Rotas 404 (ex.: /api/v1/clients, /api/v1/interactions, /api/v1/auth/me) e testes de clients/interactions falhando.
+OBJETIVO: Unificar prefixos (sem url_prefix interno) e implementar CRUD/export de clientes com interação CLIENT_CREATED.
+STATUS: CONCLUÍDA
+
+SITUAÇÃO: Auth e Interactions precisavam alinhar ao contrato /api/v1.
+PROBLEMA: /auth/login e /auth/me, /interactions estavam publicados em caminhos errados.
+OBJETIVO: Remover url_prefix dos blueprints, registrar no app.py e garantir 201/200 nos fluxos.
+STATUS: CONCLUÍDA
+
+SITUAÇÃO: Preparar ambiente para os testes integrais.
+PROBLEMA: É necessário subir a API localmente com variáveis (.env) e seed de usuários.
+OBJETIVO: Rodar o servidor (Flask/Gunicorn), validar /health, efetuar login admin e executar suíte de testes.
+STATUS: CONCLUÍDA
+
+SITUAÇÃO: Usuários padrão ausentes no banco (Supabase).
+PROBLEMA: Não há contas para autenticar/validar RBAC.
+OBJETIVO: Seedar ADMIN, MANAGER e BROKER com senha padrão.
+STATUS: CONCLUÍDA
+
+SITUAÇÃO: Implantar no Render para integração com o frontend.
+PROBLEMA: Ausência de experiência prévia de deploy e configuração de env/DB.
+OBJETIVO: Usar Procfile/render.yaml, setar DATABASE_URL, JWT_SECRET, CORS_ORIGINS, validar health e informar BASE_URL.
+STATUS: PENDENTE
+
+SITUAÇÃO: Documentação dos endpoints.
+PROBLEMA: Equipe precisa de referência centralizada e padronizada.
+OBJETIVO: Documentar rotas /api/v1 (auth, clients, interactions, analytics, health) com exemplos e códigos de resposta.
+STATUS: EM ANDAMENTO
+
+SITUAÇÃO: Passar em todos os testes.
+PROBLEMA: Garantir que regressões sejam pegas e que o contrato API está respeitado.
+OBJETIVO: Executar e corrigir eventuais falhas até 100% de sucesso nos testes.
+STATUS: CONCLUÍDA
