@@ -1,0 +1,41 @@
+# config.py
+import os
+from datetime import timedelta
+
+def _parse_duration(s: str) -> timedelta:
+    if not s:
+        return timedelta(days=7)
+    s = s.strip().lower()
+    if s.endswith("d"):
+        return timedelta(days=int(s[:-1] or 7))
+    if s.endswith("h"):
+        return timedelta(hours=int(s[:-1] or 24))
+    if s.endswith("m"):
+        return timedelta(minutes=int(s[:-1] or 60))
+    return timedelta(days=int(s))
+
+class Config:
+    # JWT
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET", "change-me")
+    JWT_ACCESS_TOKEN_EXPIRES = _parse_duration(os.getenv("JWT_EXPIRES", "7d"))
+
+    # DB
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI") or os.getenv("DATABASE_URL")
+    if not SQLALCHEMY_DATABASE_URI:
+        raise RuntimeError("DATABASE_URL/SQLALCHEMY_DATABASE_URI não definida no ambiente/.env")
+
+    # Corrige URLs antigas 'postgres://'
+    if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql+psycopg2://", 1)
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "0") == "1"
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),
+        "pool_size": int(os.getenv("DB_POOL_SIZE", "5")),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "10")),
+    }
+
+    # CORS
+    CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()] or ["*"]

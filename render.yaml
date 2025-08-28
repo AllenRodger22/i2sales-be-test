@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: i2sales-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers=2 --threads=4 --timeout=120
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://i2sales-crm.vercel.app,http://localhost:5173
+      - key: PYTHON_VERSION
+        value: 3.11.9

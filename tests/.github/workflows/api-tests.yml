@@ -1,0 +1,29 @@
+name: API Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          pip install -r i2sales-api-tests/requirements.txt
+      - name: Prepare env
+        run: |
+          cp i2sales-api-tests/.env.example i2sales-api-tests/.env
+          sed -i "s#http://localhost:5000/api/v1#${{ secrets.BASE_URL }}#g" i2sales-api-tests/.env
+          sed -i "s/admin@demo.com/${{ secrets.ADMIN_EMAIL }}/g" i2sales-api-tests/.env
+          sed -i "s/secret/${{ secrets.ADMIN_PASSWORD }}/g" i2sales-api-tests/.env
+      - name: Run tests
+        working-directory: i2sales-api-tests
+        run: pytest -m "smoke or destructive"
