@@ -1,0 +1,6 @@
+Arquivo para o Agente Codex ler e executar tarefas de TODO com razão WHY, lembrando que o WHY antecede o TODO para otimizar tempo.
+
+TODO LIST
+
+TODO: Ajeitar o login que ta bugando por erro de ipv4
+WHY: fiz algumas requests no frontend e deu erro 500 com problema de ipv6/ipv4

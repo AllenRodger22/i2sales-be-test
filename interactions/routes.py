@@ -1,11 +1,11 @@
 # interactions/routes.py
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt
+from flask import Blueprint, request, jsonify, g
 import uuid
 
 from extensions import db
 from models.client import Client
 from models.interaction import Interaction
+from auth.supabase_middleware import supabase_required
 
 # Blueprint sem prefixo interno; app.py registra em /api/v1/interactions
 bp = Blueprint("interactions", __name__)
@@ -17,9 +17,9 @@ def _error(msg, code=400):
     return jsonify({"error": msg}), code
 
 @bp.post("")
-@jwt_required()
+@supabase_required()
 def create_interaction():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     data = request.get_json(silent=True) or {}
 
     client_id = data.get("clientId")

@@ -1,6 +1,5 @@
 # clients/routes.py
-from flask import Blueprint, request, jsonify, Response
-from flask_jwt_extended import jwt_required, get_jwt
+from flask import Blueprint, request, jsonify, Response, g
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -12,6 +11,7 @@ from extensions import db
 from models.client import Client
 from models.interaction import Interaction
 from utils.rbac import ensure_client_access_or_403, require_roles
+from auth.supabase_middleware import supabase_required
 
 # Blueprint sem prefixo interno; app.py define /api/v1/clients
 bp = Blueprint("clients", __name__)
@@ -89,7 +89,7 @@ def _normalize_follow_up(value: str | None) -> str | None:
 
 
 @bp.post("")
-@jwt_required()
+@supabase_required()
 def create_client():
     payload = request.get_json(silent=True) or {}
 
@@ -106,7 +106,7 @@ def create_client():
     if not name or not phone:
         return jsonify({"error": "name e phone são obrigatórios"}), 400
 
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     owner_uuid = j.get("sub")
 
     client = Client(
@@ -150,9 +150,9 @@ def create_client():
 
 
 @bp.get("")
-@jwt_required()
+@supabase_required()
 def list_clients():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     q = (request.args.get("q") or "").strip()
     qry = Client.query
     # RBAC: brokers só veem seus registros
@@ -173,7 +173,7 @@ def list_clients():
 
 
 @bp.get("/<uuid:client_id>")
-@jwt_required()
+@supabase_required()
 def get_client(client_id: uuid.UUID):
     c = Client.query.get(client_id)
     if not c:
@@ -185,7 +185,7 @@ def get_client(client_id: uuid.UUID):
 
 
 @bp.put("/<uuid:client_id>")
-@jwt_required()
+@supabase_required()
 def update_client(client_id: uuid.UUID):
     c = Client.query.get(client_id)
     if not c:
@@ -219,7 +219,7 @@ def update_client(client_id: uuid.UUID):
 
 
 @bp.delete("/<uuid:client_id>")
-@jwt_required()
+@supabase_required()
 @require_roles("ADMIN")
 def delete_client(client_id: uuid.UUID):
     c = Client.query.get(client_id)
@@ -231,9 +231,9 @@ def delete_client(client_id: uuid.UUID):
 
 
 @bp.get("/export")
-@jwt_required()
+@supabase_required()
 def export_clients():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     qry = Client.query
     if j.get("role") == "BROKER":
         qry = qry.filter(Client.owner_id == j.get("sub"))

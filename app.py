@@ -8,14 +8,15 @@ ENV_PATH = Path(__file__).resolve().with_name(".env")
 load_dotenv(dotenv_path=ENV_PATH)
 
 from flask import Flask, jsonify, request
+from sqlalchemy import text
 
 # Suporte a execução como script (python app.py) e como módulo (flask --app app)
 try:
     from config import Config
-    from extensions import db, jwt, init_cors, bcrypt
+    from extensions import db, init_cors, bcrypt
 except ModuleNotFoundError:
     from .config import Config  # type: ignore
-    from .extensions import db, jwt, init_cors, bcrypt  # type: ignore
+    from .extensions import db, init_cors, bcrypt  # type: ignore
 
 
 def create_app():
@@ -23,7 +24,6 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
-    jwt.init_app(app)
     bcrypt.init_app(app)
     init_cors(app)
 
@@ -47,7 +47,23 @@ def create_app():
     # Health
     @app.get("/api/v1/health")
     def health():
-        return jsonify({"status": "ok"}), 200
+        # Verifica conectividade com o banco
+        try:
+            db.session.execute(text("SELECT 1"))
+            db_ok = True
+            detail = None
+        except Exception as e:
+            db_ok = False
+            detail = str(e)
+
+        payload = {
+            "status": "ok" if db_ok else "error",
+            "db": "ok" if db_ok else "error",
+        }
+        if detail and not db_ok:
+            payload["detail"] = detail
+
+        return jsonify(payload), (200 if db_ok else 500)
 
     # seed opcional (DEV/TEST)
     @app.cli.command("seed_admin")

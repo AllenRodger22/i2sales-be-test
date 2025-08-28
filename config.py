@@ -17,9 +17,6 @@ def _parse_duration(s: str) -> timedelta:
     return timedelta(days=int(s))
 
 class Config:
-    # JWT
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET", "change-me")
-    JWT_ACCESS_TOKEN_EXPIRES = _parse_duration(os.getenv("JWT_EXPIRES", "7d"))
     # Supabase (GoTrue) JWT secret para validar tokens do frontend
     SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 

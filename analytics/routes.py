@@ -1,19 +1,19 @@
 # analytics/routes.py
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt
+from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
 from extensions import db
 from models.client import Client
 from models.interaction import Interaction
+from auth.supabase_middleware import supabase_required
 
 bp = Blueprint("analytics", __name__)
 
 def _error(msg, code): return jsonify({"error": msg}), code
 
 @bp.get("/broker-kpis")
-@jwt_required()
+@supabase_required()
 def broker_kpis():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     qry = Client.query
     if j.get("role") == "BROKER":
         qry = qry.filter(Client.owner_id == j.get("sub"))
@@ -31,9 +31,9 @@ def broker_kpis():
     }), 200
 
 @bp.get("/productivity")
-@jwt_required()
+@supabase_required()
 def productivity():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     start = request.args.get("startDate")
     end = request.args.get("endDate")
     broker_id = request.args.get("brokerId")
@@ -57,9 +57,9 @@ def productivity():
     return jsonify({"series": series}), 200
 
 @bp.get("/funnel")
-@jwt_required()
+@supabase_required()
 def funnel():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     start = request.args.get("startDate")
     end = request.args.get("endDate")
     broker_id = request.args.get("brokerId")

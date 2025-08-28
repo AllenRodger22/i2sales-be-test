@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 from flask import current_app
 
-# PyJWT is an indirect dependency via Flask-JWT-Extended
+# PyJWT is required to validate Supabase tokens
 import jwt as pyjwt
 
 
@@ -32,4 +32,3 @@ def verify_supabase_jwt(token: str) -> Dict[str, Any]:
         return claims
     except Exception as e:
         raise SupabaseAuthError(str(e))
-

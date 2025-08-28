@@ -8,14 +8,13 @@ Regras:
 """
 
 from typing import Optional
-from flask import jsonify
-from flask_jwt_extended import get_jwt
+from flask import jsonify, g
 from functools import wraps
 
 ROLES = {"BROKER", "MANAGER", "ADMIN"}
 
 def current_sub_and_role():
-    j = get_jwt()
+    j = getattr(g, "jwt", {})
     return j.get("sub"), j.get("role")
 
 def is_broker(role: Optional[str]) -> bool:
