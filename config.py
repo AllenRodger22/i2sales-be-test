@@ -20,6 +20,8 @@ class Config:
     # JWT
     JWT_SECRET_KEY = os.getenv("JWT_SECRET", "change-me")
     JWT_ACCESS_TOKEN_EXPIRES = _parse_duration(os.getenv("JWT_EXPIRES", "7d"))
+    # Supabase (GoTrue) JWT secret para validar tokens do frontend
+    SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
     # DB
     # Prefer DATABASE_URL (Render/Supabase padrão), caindo para SQLALCHEMY_DATABASE_URI
@@ -36,23 +38,28 @@ class Config:
     try:
         parsed = urlparse(SQLALCHEMY_DATABASE_URI)
         host = parsed.hostname or ""
-        if host.endswith("supabase.co"):
+        if host.endswith("supabase.co") or host.endswith("supabase.com"):
             q = dict(parse_qsl(parsed.query, keep_blank_values=True))
+            # Garante SSL por padrão
+            if "sslmode" not in q:
+                q["sslmode"] = "require"
+
             if "hostaddr" not in q:
                 # resolve apenas IPv4
                 infos = socket.getaddrinfo(host, parsed.port or 5432, socket.AF_INET, socket.SOCK_STREAM)
                 if infos:
                     ipv4 = infos[0][4][0]
                     q["hostaddr"] = ipv4
-                    new_query = urlencode(q)
-                    SQLALCHEMY_DATABASE_URI = urlunparse((
-                        parsed.scheme,
-                        parsed.netloc,
-                        parsed.path,
-                        parsed.params,
-                        new_query,
-                        parsed.fragment,
-                    ))
+
+            new_query = urlencode(q)
+            SQLALCHEMY_DATABASE_URI = urlunparse((
+                parsed.scheme,
+                parsed.netloc,
+                parsed.path,
+                parsed.params,
+                new_query,
+                parsed.fragment,
+            ))
     except Exception:
         # Qualquer falha mantém a URI original
         pass

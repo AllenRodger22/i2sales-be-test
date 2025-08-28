@@ -1,0 +1,35 @@
+# auth/supabase_auth.py
+import os
+from typing import Dict, Any
+
+from flask import current_app
+
+# PyJWT is an indirect dependency via Flask-JWT-Extended
+import jwt as pyjwt
+
+
+class SupabaseAuthError(Exception):
+    pass
+
+
+def verify_supabase_jwt(token: str) -> Dict[str, Any]:
+    """Validate a Supabase access token (HS256) and return its claims.
+
+    Requires SUPABASE_JWT_SECRET to be configured.
+    """
+    secret = (current_app.config.get("SUPABASE_JWT_SECRET")
+              if current_app else os.getenv("SUPABASE_JWT_SECRET"))
+    if not secret:
+        raise SupabaseAuthError("SUPABASE_JWT_SECRET is not configured")
+
+    try:
+        claims = pyjwt.decode(
+            token,
+            secret,
+            algorithms=["HS256"],
+            options={"require": ["sub", "exp"]},
+        )
+        return claims
+    except Exception as e:
+        raise SupabaseAuthError(str(e))
+
