@@ -80,6 +80,14 @@ def _camel_client(c: Client, with_interactions=False) -> dict:
     return base
 
 
+def _normalize_follow_up(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if value == "Concluído":
+        return "Concluido"
+    return value
+
+
 @bp.post("")
 @jwt_required()
 def create_client():
@@ -89,7 +97,7 @@ def create_client():
     phone = (payload.get("phone") or "").strip()
 
     status = payload.get("status") or "Primeiro Atendimento"
-    follow_up = payload.get("followUpState") or "Sem Follow Up"
+    follow_up = _normalize_follow_up(payload.get("followUpState") or "Sem Follow Up")
 
     if status not in VALID_STATUS:
         return jsonify({"error": f"status inválido: {status}"}), 400
@@ -200,7 +208,7 @@ def update_client(client_id: uuid.UUID):
             return jsonify({"error": f"status inválido: {new_status}"}), 400
         c.status = new_status
     if "followUpState" in data:
-        new_fu = data.get("followUpState")
+        new_fu = _normalize_follow_up(data.get("followUpState"))
         if new_fu not in VALID_FU:
             return jsonify({"error": f"followUpState inválido: {new_fu}"}), 400
         c.follow_up_state = new_fu

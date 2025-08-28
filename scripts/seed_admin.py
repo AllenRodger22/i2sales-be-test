@@ -1,28 +1,41 @@
-# scripts/seed_admin.py
 import uuid
 from extensions import db, bcrypt
 from models.user import User
 
-ADMIN_NAME = "Admin"
-ADMIN_EMAIL = "admin@x.com"       # igual ao teste
-ADMIN_PASSWORD = "1234567890"     # igual ao teste
-ADMIN_ROLE = "ADMIN"
+PASSWORD = "1234567890"  # mesma senha para todos os seeds
 
-def run():
-    user = User.query.filter_by(email=ADMIN_EMAIL).first()
-    pwd_hash = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode("utf-8")
+USERS = [
+    {"name": "Admin",   "email": "admin@x.com",   "role": "ADMIN"},
+    {"name": "Manager", "email": "manager@x.com", "role": "MANAGER"},
+    {"name": "Broker",  "email": "broker@x.com",  "role": "BROKER"},
+]
+
+
+def _upsert_user(name: str, email: str, role: str):
+    user = User.query.filter_by(email=email).first()
+    pwd_hash = bcrypt.generate_password_hash(PASSWORD).decode("utf-8")
     if user:
-        user.name = ADMIN_NAME
+        user.name = name
         user.password_hash = pwd_hash
-        user.role = ADMIN_ROLE
+        user.role = role
     else:
         user = User(
             id=uuid.uuid4(),
-            name=ADMIN_NAME,
-            email=ADMIN_EMAIL,
+            name=name,
+            email=email,
             password_hash=pwd_hash,
-            role=ADMIN_ROLE
+            role=role,
         )
         db.session.add(user)
+    return user
+
+
+def run():
+    created = []
+    for u in USERS:
+        _upsert_user(u["name"], u["email"], u["role"])
+        created.append(f"{u['email']} ({u['role']})")
     db.session.commit()
-    print(f"Seeded: {ADMIN_EMAIL} / {ADMIN_PASSWORD} ({ADMIN_ROLE})")
+    print("Seeded users:")
+    for entry in created:
+        print(f" - {entry} / {PASSWORD}")
