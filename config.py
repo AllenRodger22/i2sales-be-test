@@ -1,5 +1,7 @@
 # config.py
 import os
+import socket
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from datetime import timedelta
 
 def _parse_duration(s: str) -> timedelta:
@@ -28,6 +30,32 @@ class Config:
     # Corrige URLs antigas 'postgres://'
     if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql+psycopg2://", 1)
+
+    # Força IPv4 quando o resolver devolver IPv6 não alcançável (comum em hosts serverless)
+    # Implementado adicionando 'hostaddr=<ipv4>' na query string do DSN.
+    try:
+        parsed = urlparse(SQLALCHEMY_DATABASE_URI)
+        host = parsed.hostname or ""
+        if host.endswith("supabase.co"):
+            q = dict(parse_qsl(parsed.query, keep_blank_values=True))
+            if "hostaddr" not in q:
+                # resolve apenas IPv4
+                infos = socket.getaddrinfo(host, parsed.port or 5432, socket.AF_INET, socket.SOCK_STREAM)
+                if infos:
+                    ipv4 = infos[0][4][0]
+                    q["hostaddr"] = ipv4
+                    new_query = urlencode(q)
+                    SQLALCHEMY_DATABASE_URI = urlunparse((
+                        parsed.scheme,
+                        parsed.netloc,
+                        parsed.path,
+                        parsed.params,
+                        new_query,
+                        parsed.fragment,
+                    ))
+    except Exception:
+        # Qualquer falha mantém a URI original
+        pass
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = os.getenv("SQLALCHEMY_ECHO", "0") == "1"
