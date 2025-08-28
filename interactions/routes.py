@@ -7,7 +7,8 @@ from extensions import db
 from models.client import Client
 from models.interaction import Interaction
 
-bp = Blueprint("interactions", __name__, url_prefix="/interactions")
+# Blueprint sem prefixo interno; app.py registra em /api/v1/interactions
+bp = Blueprint("interactions", __name__)
 
 def _parse_uuid(value: str) -> uuid.UUID:
     return uuid.UUID(str(value))

@@ -5,7 +5,8 @@ from sqlalchemy.exc import NoResultFound
 from extensions import db, bcrypt
 from models.user import User
 
-bp = Blueprint("auth", __name__, url_prefix="/auth")
+# Blueprint sem prefixo interno; app.py registra em /api/v1/auth
+bp = Blueprint("auth", __name__)
 
 @bp.route("/login", methods=["POST"])
 def login():
