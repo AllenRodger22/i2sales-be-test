@@ -20,7 +20,8 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = _parse_duration(os.getenv("JWT_EXPIRES", "7d"))
 
     # DB
-    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI") or os.getenv("DATABASE_URL")
+    # Prefer DATABASE_URL (Render/Supabase padrão), caindo para SQLALCHEMY_DATABASE_URI
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
     if not SQLALCHEMY_DATABASE_URI:
         raise RuntimeError("DATABASE_URL/SQLALCHEMY_DATABASE_URI não definida no ambiente/.env")
 
