@@ -24,11 +24,11 @@ VALID_STATUS = {
     "Fechado",
     "Ativo",
     "Atrasado",
-    "Concluído",
+    "Concluído", "Concluido",
     "Cancelado",
     "Perdido",
 }
-VALID_FU = {"Sem Follow Up", "Ativo", "Atrasado", "Concluído", "Cancelado", "Perdido"}
+VALID_FU = {"Sem Follow Up", "Ativo", "Atrasado", "Concluído", "Concluido", "Cancelado", "Perdido"}
 
 
 def _now():
@@ -260,4 +260,3 @@ def export_clients():
         ])
     csv_data = output.getvalue()
     return Response(csv_data, mimetype="text/csv; charset=utf-8"), 200
-

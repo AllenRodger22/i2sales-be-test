@@ -28,7 +28,16 @@ def login():
         return jsonify({"error": "Credenciais inválidas."}), 401
 
     token = create_access_token(identity=str(user.id), additional_claims={"role": user.role})
-    return jsonify({"token": token}), 200
+    # Frontend espera token e dados básicos do usuário
+    return jsonify({
+        "token": token,
+        "user": {
+            "id": str(user.id),
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+        }
+    }), 200
 
 
 @bp.route("/me", methods=["GET"])
