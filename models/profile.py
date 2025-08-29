@@ -23,15 +23,15 @@ class Profile(db.Model):
     avatar_url = db.Column(db.String)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     # Prefer JSONB in Postgres; fall back to JSON if not available
+    # Use a non-reserved attribute name; keep DB column name as 'metadata'
     try:
         from sqlalchemy.dialects.postgresql import JSONB  # type: ignore
-        metadata = db.Column(JSONB)
+        metadata_json = db.Column("metadata", JSONB)
     except Exception:  # pragma: no cover - fallback for non-PG test envs
-        metadata = db.Column(db.JSON)
+        metadata_json = db.Column("metadata", db.JSON)
 
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=True)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 
     def __repr__(self) -> str:
         return f"<Profile id={self.id} user_id={self.user_id} active={self.is_active}>"
-

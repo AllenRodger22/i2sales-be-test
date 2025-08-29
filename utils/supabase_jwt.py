@@ -170,7 +170,7 @@ def verify_supabase_jwt(bearer_token: str) -> Dict[str, Any]:
     return claims
 
 
-def get_or_create_user_and_profile(auth_user_id, email: Optional[str]) -> Tuple[User, Optional[Profile]]:
+def get_or_create_user_and_profile(auth_user_id, email: Optional[str], role: Optional[str] = None) -> Tuple[User, Optional[Profile]]:
     """Ensure 1:1 mapping auth.users.id -> users.id -> profiles.user_id.
 
     - User.id equals auth_user_id (UUID from token)
@@ -186,8 +186,23 @@ def get_or_create_user_and_profile(auth_user_id, email: Optional[str]) -> Tuple[
     if not user:
         # Minimal user: name hint from email
         name_hint = (email or "").split("@")[0] if email else None
-        user = User(id=sup_uuid, email=email or None, name=name_hint or "user", role="BROKER", password_hash="supabase-external")
+        desired_role = (str(role).upper() if role else "BROKER")
+        if desired_role not in _allowed_roles():
+            desired_role = "BROKER"
+        user = User(
+            id=sup_uuid,
+            email=email or None,
+            name=name_hint or "user",
+            role=desired_role,
+            password_hash="supabase-external",
+        )
         db.session.add(user)
+    else:
+        # Optionally sync role from claims if provided and allowed
+        if role:
+            desired_role = str(role).upper()
+            if desired_role in _allowed_roles() and user.role != desired_role:
+                user.role = desired_role
 
     profile = db.session.query(Profile).filter_by(user_id=sup_uuid).one_or_none()
     if not profile:

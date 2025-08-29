@@ -33,7 +33,7 @@ def me():
     email = claims.get("email")
     role = claims.get("role") or "BROKER"
 
-    user, profile = get_or_create_user_and_profile(sub, email)
+    user, profile = get_or_create_user_and_profile(sub, email, role)
 
     target, reason = _routing_target(user.role or role, bool(profile.is_active if profile else True))
 
@@ -49,10 +49,10 @@ def me():
             "address": profile.address if profile else None,
             "avatarUrl": profile.avatar_url if profile else None,
             "isActive": bool(profile.is_active) if profile else True,
+            "metadata": profile.metadata_json if profile else None,
         },
         "routing": {
             "target": target,
             "reason": reason,
         }
     }), 200
-

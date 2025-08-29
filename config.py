@@ -29,6 +29,8 @@ class Config:
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
     # Roles allowed in the system
     ALLOWED_ROLES = os.getenv("ALLOWED_ROLES", "BROKER,MANAGER,ADMIN")
+    # Enable dev-only token mint route (/api/v1/auth/dev/login)
+    DEV_LOGIN_ENABLED = os.getenv("DEV_LOGIN_ENABLED", "0") == "1"
 
     # Password pepper (concatenated to user password before hashing)
     PASSWORD_PEPPER = os.getenv("PASSWORD_PEPPER", "pikachu")
