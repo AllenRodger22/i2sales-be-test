@@ -71,11 +71,18 @@ def create_app():
     from analytics.routes import bp as analytics_bp
     from clients.routes import bp as clients_bp
     from interactions.routes import bp as inter_bp
+    from routes.me import bp as me_bp
+    from routes.clients import bp as clients_v2_bp
+    from routes.interactions import bp as interactions_v2_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(analytics_bp, url_prefix="/api/v1/analytics")
     app.register_blueprint(clients_bp, url_prefix="/api/v1/clients")
     app.register_blueprint(inter_bp, url_prefix="/api/v1/interactions")
+    # New unified endpoints
+    app.register_blueprint(me_bp, url_prefix="/api")
+    app.register_blueprint(clients_v2_bp, url_prefix="/api")
+    app.register_blueprint(interactions_v2_bp, url_prefix="/api")
 
     # Health
     @app.get("/api/v1/health")
