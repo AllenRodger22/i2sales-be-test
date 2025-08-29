@@ -16,8 +16,11 @@ def init_cors(app):
     # Apply CORS globally before any auth/route middleware
     CORS(
         app,
-        resources={r"/api/v1/*": {"origins": allowed_origins}},
+        resources={
+            r"/api/*": {"origins": allowed_origins},
+            r"/api/v1/*": {"origins": allowed_origins},
+        },
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
-        supports_credentials=False,
+        supports_credentials=True,
     )

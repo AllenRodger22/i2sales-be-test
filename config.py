@@ -17,8 +17,21 @@ def _parse_duration(s: str) -> timedelta:
     return timedelta(days=int(s))
 
 class Config:
-    # Supabase (GoTrue) JWT secret para validar tokens do frontend
+    # Supabase project URL (e.g., https://<ref>.supabase.co)
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    # Optional audience to validate against (if configured in Supabase)
+    SUPABASE_JWT_AUD = os.getenv("SUPABASE_JWT_AUD")
+    # Optional issuer override (defaults to f"{SUPABASE_URL}/auth/v1")
+    SUPABASE_JWT_ISS = os.getenv("SUPABASE_JWT_ISS")
+    # Backwards-compat: previously used HS256 secret; kept only for legacy paths
     SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+    # Public anon key (allowed for calling public GoTrue endpoints)
+    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    # Roles allowed in the system
+    ALLOWED_ROLES = os.getenv("ALLOWED_ROLES", "BROKER,MANAGER,ADMIN")
+
+    # Password pepper (concatenated to user password before hashing)
+    PASSWORD_PEPPER = os.getenv("PASSWORD_PEPPER", "pikachu")
 
     # DB
     # Prefer DATABASE_URL (Render/Supabase padrão), caindo para SQLALCHEMY_DATABASE_URI
@@ -78,3 +91,13 @@ class Config:
         "http://localhost:5173",
         "https://SEU-PROJETO.vercel.app",
     ]
+
+    # Cookie settings for JWT in cookies
+    COOKIE_ACCESS_NAME = os.getenv("COOKIE_ACCESS_NAME", "sb-access-token")
+    COOKIE_REFRESH_NAME = os.getenv("COOKIE_REFRESH_NAME", "sb-refresh-token")
+    COOKIE_EXPIRES_NAME = os.getenv("COOKIE_EXPIRES_NAME", "sb-expires-at")
+    COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN") or None
+    COOKIE_PATH = os.getenv("COOKIE_PATH", "/")
+    COOKIE_SECURE = os.getenv("COOKIE_SECURE", "0") == "1"
+    COOKIE_HTTPONLY = True  # always httpOnly for security
+    COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "Lax")  # Lax | None | Strict

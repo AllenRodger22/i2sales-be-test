@@ -3,21 +3,30 @@ from __future__ import annotations
 from functools import wraps
 from typing import Callable, Dict, Any, Optional
 
-from flask import request, jsonify, g
+from flask import request, jsonify, g, current_app
 
 from extensions import db, bcrypt
 from models.user import User
 from .supabase_auth import verify_supabase_jwt, SupabaseAuthError
 import uuid
+from sqlalchemy import text
 
 
 def _extract_bearer_token() -> Optional[str]:
+    # 1) Authorization header
     auth_header = request.headers.get("Authorization", "")
-    if not auth_header:
-        return None
-    parts = auth_header.split()
-    if len(parts) == 2 and parts[0].lower() == "bearer":
-        return parts[1].strip()
+    if auth_header:
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            return parts[1].strip()
+    # 2) Fallback: cookie-based access token
+    try:
+        cookie_name = (current_app.config.get("COOKIE_ACCESS_NAME") if current_app else None) or "sb-access-token"
+        token = request.cookies.get(cookie_name)
+        if token:
+            return token
+    except Exception:
+        pass
     return None
 
 
@@ -122,6 +131,35 @@ def supabase_required() -> Callable:
                 "supabase_sub": sup_claims.get("sub"),
             }
             g.current_user = user
+
+            # Best-effort: keep public.profiles in sync (if the table exists in the same DB)
+            try:
+                db.session.execute(
+                    text(
+                        """
+                        insert into public.profiles (id, email, name, role, user_id, created_at, updated_at)
+                        values (:id, :email, :name, :role, :user_id, now(), now())
+                        on conflict (id)
+                        do update set
+                            email = excluded.email,
+                            name  = excluded.name,
+                            role  = excluded.role,
+                            user_id = coalesce(public.profiles.user_id, excluded.user_id),
+                            updated_at = now();
+                        """
+                    ),
+                    {
+                        "id": uuid.UUID(str(sup_claims.get("sub"))),
+                        "email": user.email,
+                        "name": name_hint or (user.email.split("@")[0] if user.email else None),
+                        "role": user.role,
+                        "user_id": user.id,
+                    },
+                )
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                # do not block request if profiles table or policy is missing
 
             return fn(*args, **kwargs)
 
