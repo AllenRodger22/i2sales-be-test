@@ -97,8 +97,19 @@ def supabase_required() -> Callable:
                 or sup_claims.get("name")
             )
 
+            # Decide default role for auto-provision based on Supabase user metadata
+            requested_role = (
+                (sup_claims.get("user_metadata") or {}).get("role")
+                or (sup_claims.get("user_metadata") or {}).get("requested_role")
+                or (sup_claims.get("app_metadata") or {}).get("requested_role")
+                or (sup_claims.get("app_metadata") or {}).get("role")
+            )
+            requested_role = str(requested_role).upper() if requested_role else None
+            # Accept only known roles; fallback to BROKER
+            default_role = requested_role if requested_role in {"BROKER", "MANAGER", "ADMIN"} else "BROKER"
+
             try:
-                user = _ensure_local_user(email, name_hint, sup_claims.get("sub"))
+                user = _ensure_local_user(email, name_hint, sup_claims.get("sub"), default_role=default_role)
             except Exception as e:
                 db.session.rollback()
                 return jsonify({"error": "Internal Server Error", "detail": str(e)}), 500

@@ -27,6 +27,39 @@ def create_app():
     bcrypt.init_app(app)
     init_cors(app)
 
+    # Startup diagnostics (safe; masks secrets)
+    try:
+        from urllib.parse import urlparse, parse_qsl
+
+        dsn = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        parsed = urlparse(dsn)
+        q = dict(parse_qsl(parsed.query))
+        db_host = parsed.hostname or "?"
+        db_port = parsed.port or "?"
+        db_name = (parsed.path or "/").lstrip("/") or "?"
+        dialect = (parsed.scheme or "?")
+        user = parsed.username or "?"
+        sslmode = q.get("sslmode")
+        hostaddr = q.get("hostaddr")
+
+        app.logger.info(
+            "[startup] DB: dialect=%s host=%s port=%s db=%s sslmode=%s hostaddr=%s user=%s",
+            dialect,
+            db_host,
+            db_port,
+            db_name,
+            sslmode,
+            hostaddr,
+            user,
+        )
+        cors_origins = app.config.get("CORS_ORIGINS")
+        app.logger.info("[startup] CORS_ORIGINS=%s", cors_origins)
+        jwt_set = bool(app.config.get("SUPABASE_JWT_SECRET"))
+        app.logger.info("[startup] SUPABASE_JWT_SECRET set=%s", jwt_set)
+    except Exception as _e:
+        # Do not block startup if diagnostics fail
+        app.logger.warning("[startup] diagnostics failed: %s", _e)
+
     # Garantir resposta ao preflight (OPTIONS) globalmente
     @app.before_request
     def _handle_cors_preflight():
