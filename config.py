@@ -27,6 +27,8 @@ class Config:
     SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
     # Public anon key (allowed for calling public GoTrue endpoints)
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    # Service role key (required for backend-admin user creation)
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     # Roles allowed in the system
     ALLOWED_ROLES = os.getenv("ALLOWED_ROLES", "BROKER,MANAGER,ADMIN")
     # Enable dev-only token mint route (/api/v1/auth/dev/login)
